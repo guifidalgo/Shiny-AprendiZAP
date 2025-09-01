@@ -1,0 +1,12 @@
+[project]
+name = "shiny-aprendizap"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "pandas>=2.3.2",
+    "plotnine>=0.15.0",
+    "pyarrow>=21.0.0",
+    "shiny>=1.4.0",
+]
