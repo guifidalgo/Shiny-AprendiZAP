@@ -116,25 +116,25 @@ app_ui = ui.page_sidebar(
                 ui.output_plot("plot_cadastros")
             )
         ),
-        ui.card(
-            ui.card_header("Professores por Estado"),
-            ui.card_body(
-                ui.output_plot("plot_professores_estado")
-            )
-        ),
-        ui.card(
-            ui.card_header("UTM Origem"),
-            ui.card_body(
-                ui.output_plot("plot_utm_origem")
-            )
-        ),
+        # ui.card(
+        #     ui.card_header("Professores por Estado"),
+        #     ui.card_body(
+        #         ui.output_plot("plot_professores_estado")
+        #     )
+        # ),
+        # ui.card(
+        #     ui.card_header("UTM Origem"),
+        #     ui.card_body(
+        #         ui.output_plot("plot_utm_origem")
+        #     )
+        # ),
         ui.card(
             ui.card_header("Matriz RFM - Recência, Frequência e Tempo Gasto na Plataforma"),
             ui.card_body(
                 ui.output_plot("plot_matriz_rfm")
             )
         ),
-        col_widths=[3, 3, 3, 3, 12, 6, 6, 12]
+        col_widths=[3, 3, 3, 3, 12, 12]
     ),
     title="AprendiZAP - Grupo 01",
 )
@@ -260,11 +260,12 @@ def server(input, output, session):
             # p9.scale_x_discrete(limits=heatmap['R_score'].unique()[::-1]) +
             # p9.scale_y_discrete(limits=heatmap['F_score'].unique()[::-1]) +
             p9.labs(
-        x="Recência",
-        y="Frequência",
-        fill="Tempo"
-    )
-)
+                x="Recência",
+                y="Frequência",
+                fill="Tempo"
+            ) +
+            p9.theme_minimal()
+        )
         return plot
 
 app = App(app_ui, server)
