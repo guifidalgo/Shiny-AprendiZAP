@@ -34,85 +34,82 @@ rfm_score = teachers['RFM_Score'].unique().tolist()
 rfm_score.sort()
 
 
-app_ui = ui.page_sidebar(
-    ui.sidebar(
-        "Filtros",
-        ui.input_switch(
-            'switch_valid',
-            'Apenas Usuários Válidos',
-            value=False
+app_ui = ui.page_navbar(
+    ui.nav_panel(
+        "Exploração",
+        ui.layout_sidebar(
+            ui.sidebar(
+                "Filtros",
+                ui.input_switch(
+                    "filtro_usuario_valido",
+                    "Apenas usuários válidos",
+                    value=False
+                    ),
+                ui.input_slider(
+                    "slider_date",
+                    label="Data de Cadastro",
+                    min=teachers['semana_entrada'].min(),
+                    max=teachers['semana_entrada'].max(),
+                    value=(teachers['semana_entrada'].min(), teachers['semana_entrada'].max()),
+                    time_format="%m/%Y"
+                ),
+                bg="#f8f8f8"
             ),
-        ui.input_slider(
-            "slider_rfm_score",
-            label="Score RFM",
-            min=rfm_score[0],
-            max=rfm_score[-1],
-            value=(rfm_score[0], rfm_score[-1])
-        ),
-        ui.input_slider(
-            "slider_date",
-            label="Data de Cadastro:",
-            min=teachers['semana_entrada'].min(),
-            max=teachers['semana_entrada'].max(),
-            value=(teachers['semana_entrada'].min(), teachers['semana_entrada'].max()),
-            time_format="%m/%Y",
-        ),
-        bg="#f8f8f8"
-    ),
-    ui.layout_columns(
-        ui.output_ui("header_exploracao"),
-        ui.value_box(
-        "Cadastros",
-        ui.output_text("qtd_professores"),
-        "Professores",
-        showcase=ui.HTML(icon_teacher),
-        theme=ui.value_box_theme('aprendizap', bg=color_map[0], fg="white")
-        ),
-        ui.value_box(
-            "Score RFM Médio",
-            ui.output_text("media_score_rfm"),
-            "Pontos",
-            showcase=ui.HTML(icon_speedometer),
-            theme=ui.value_box_theme('aprendizap3', bg=color_map[2], fg="white")
-        ),
-        ui.value_box(
-            "Frequência Média de Acessos",
-            ui.output_text("media_acessos"),
-            "Acessos",
-            showcase=ui.HTML(icon_interaction),
-            theme=ui.value_box_theme('aprendizap2', bg=color_map[1], fg="white")
-        ),
-        ui.value_box(
-            "Tempo Médio Gasto",
-            ui.output_text("media_duracao_acessos"),
-            "Minutos",
-            showcase=ui.HTML(icon_stopwatch),
-            theme=ui.value_box_theme('aprendizap2', bg=color_map[3], fg="white")
-        ),
-        ui.card(
-            ui.card_header(
-                ui.input_select(
-                    'select_plot',
-                    '',
-                    choices=['Cadastro de Professores', 'RFM Score Médio', 'Frequência Média de Acessos', 'Tempo Médio Gasto'],
-                )
+            ui.layout_columns(
+                ui.value_box(
+                "Cadastros",
+                ui.output_text("qtd_professores"),
+                "Professores",
+                showcase=ui.HTML(icon_teacher),
+                theme=ui.value_box_theme('aprendizap', bg=color_map[0], fg="white")
+                ),
+                ui.value_box(
+                    "Score RFM Médio",
+                    ui.output_text("media_score_rfm"),
+                    "Pontos",
+                    showcase=ui.HTML(icon_speedometer),
+                    theme=ui.value_box_theme('aprendizap3', bg=color_map[2], fg="white")
+                ),
+                ui.value_box(
+                    "Frequência Média de Acessos",
+                    ui.output_text("media_acessos"),
+                    "Acessos",
+                    showcase=ui.HTML(icon_interaction),
+                    theme=ui.value_box_theme('aprendizap2', bg=color_map[1], fg="white")
+                ),
+                ui.value_box(
+                    "Tempo Médio Gasto",
+                    ui.output_text("media_duracao_acessos"),
+                    "Minutos",
+                    showcase=ui.HTML(icon_stopwatch),
+                    theme=ui.value_box_theme('aprendizap2', bg=color_map[3], fg="white")
+                ),
+                ui.card(
+                    ui.card_header(
+                        ui.input_select(
+                            'select_plot',
+                            '',
+                            choices=['Cadastro de Professores', 'RFM Score Médio', 'Frequência Média de Acessos', 'Tempo Médio Gasto'],
+                        )
+                    ),
+                    ui.card_body(
+                        ui.output_plot("plot_cadastros")
+                    )
+                ),
+                ui.card(
+                    ui.card_header("Matriz RFM - Recência, Frequência e Tempo Gasto na Plataforma"),
+                    ui.card_body(
+                        ui.output_plot("plot_matriz_rfm")
+                    )
+                ),
+                col_widths=[3, 3, 3, 3, 12, 12]
             ),
-            ui.card_body(
-                ui.output_plot("plot_cadastros")
-            )
         ),
-        ui.card(
-            ui.card_header("Matriz RFM - Recência, Frequência e Tempo Gasto na Plataforma"),
-            ui.card_body(
-                ui.output_plot("plot_matriz_rfm")
-            )
-        ),
-        col_widths=[12, 3, 3, 3, 3, 12, 12]
     ),
-    title="AprendiZAP - Grupo 01",
+    ui.nav_panel("Relatórios", ui.output_text("relatorios")),
+    ui.nav_panel("Configurações", ui.output_text("configuracoes")),
+    title="AprendiZAP",
 )
-
-
 
 def server(input, output, session):
     @reactive.calc
@@ -132,9 +129,6 @@ def server(input, output, session):
             (df['RFM_Score'] <= end_rfm)
         ]
 
-    @render.ui
-    def header_exploracao():
-        return ui.h2("Análise Exploratória")
 
     @render.text
     def qtd_professores():
@@ -284,29 +278,26 @@ def server(input, output, session):
     
     @render.plot
     def plot_matriz_rfm():
-        duration_min = 0.5
+        duration_min = 0.01
         duration_max = 150
         df = teachers_filtrado()
         heatmap = df.groupby(['R_score', 'F_score']).agg({'Duration': 'mean'}).reset_index()
-        heatmap['p_cut'] = pd.cut(heatmap['Duration'], bins=[0, 30, 150], labels=("low", "high"))
+        heatmap['p_cut'] = pd.qcut(heatmap['Duration'], 2, labels=("low", "high"))
         heatmap['Duration'] = heatmap['Duration'].round(1)
         plot = (
             p9.ggplot(heatmap, p9.aes(x='R_score', y='F_score', fill='Duration')) +
             p9.geom_tile(p9.aes(width=0.95, height=0.95)) +
             p9.geom_text(p9.aes(label='Duration', color='p_cut'), size=9, show_legend=False) +
             p9.scale_color_manual(['white', 'black']) +
-            p9.scale_fill_gradientn(colors=[color_map[1], color_map[3], color_map[2]], limits=(duration_min, duration_max), trans="log10") +
-            # p9.scale_fill_cmap(cmap_name='viridis', trans="log10", limits=(duration_min, duration_max)) +
+            p9.scale_fill_cmap(cmap_name='viridis', trans="log10", limits=(duration_min, duration_max)) +
+            # p9.scale_x_discrete(limits=heatmap['R_score'].unique()[::-1]) +
+            # p9.scale_y_discrete(limits=heatmap['F_score'].unique()[::-1]) +
             p9.labs(
                 x="Recência",
                 y="Frequência",
-                fill="Tempo (minutos)",
-                title="Matriz RFM - Recência, Frequência e Tempo Gasto na Plataforma"
+                fill="Tempo"
             ) +
-            p9.theme_minimal() +
-            p9.theme(
-                panel_grid=p9.element_blank()
-            )
+            p9.theme_minimal()
         )
         return plot
     
