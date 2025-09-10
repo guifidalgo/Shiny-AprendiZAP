@@ -33,6 +33,11 @@ m_score.sort()
 rfm_score = teachers['RFM_Score'].unique().tolist()
 rfm_score.sort()
 
+entries = pd.read_parquet("data/entries.parquet")
+entries = entries[entries['data_inicio'] >= "2022-01-03"]
+entries['semana_inicio'] = pd.to_datetime(entries['data_inicio'].dt.date - pd.to_timedelta(entries['data_inicio'].dt.dayofweek, unit='d')).dt.tz_localize(None)
+
+
 
 app_ui = ui.page_sidebar(
     ui.sidebar(
@@ -43,18 +48,19 @@ app_ui = ui.page_sidebar(
             value=False
             ),
         ui.input_slider(
-            "slider_rfm_score",
-            label="Score RFM",
-            min=rfm_score[0],
-            max=rfm_score[-1],
-            value=(rfm_score[0], rfm_score[-1])
-        ),
-        ui.input_slider(
             "slider_date",
             label="Data de Cadastro:",
             min=teachers['semana_entrada'].min(),
             max=teachers['semana_entrada'].max(),
             value=(teachers['semana_entrada'].min(), teachers['semana_entrada'].max()),
+            time_format="%m/%Y",
+        ),
+        ui.input_slider(
+            "slider_interacoes",
+            label="Data de Interação:",
+            min=entries['semana_inicio'].min(),
+            max=entries['semana_inicio'].max(),
+            value=(entries['semana_inicio'].min(), entries['semana_inicio'].max()),
             time_format="%m/%Y",
         ),
         bg="#f8f8f8"
@@ -102,12 +108,32 @@ app_ui = ui.page_sidebar(
             )
         ),
         ui.card(
+            ui.card_header("Professores por Estado"),
+            ui.card_body(
+                ui.output_plot("plot_professores_estado")
+            )
+        ),
+        ui.card(
+            ui.card_header("Professores por UTM de Origem"),
+            ui.card_body(
+                ui.output_plot("plot_utm_origem")
+            )
+        ),
+        ui.output_ui("divider"),
+        ui.output_ui("header_explicacao"),
+        ui.card(
             ui.card_header("Matriz RFM - Recência, Frequência e Tempo Gasto na Plataforma"),
             ui.card_body(
                 ui.output_plot("plot_matriz_rfm")
             )
         ),
-        col_widths=[12, 3, 3, 3, 3, 12, 12]
+        ui.card(
+            ui.card_header("Interações Semanais de Professores"),
+            ui.card_body(
+                ui.output_plot("plot_interacoes")
+            )
+        ),
+        col_widths=[12, 3, 3, 3, 3, 12, 6, 6, 12, 12, 12]
     ),
     title="AprendiZAP - Grupo 01",
 )
@@ -119,22 +145,40 @@ def server(input, output, session):
     def teachers_filtrado():
         start_date = pd.to_datetime(input.slider_date()[0]).tz_localize(None)
         end_date = pd.to_datetime(input.slider_date()[1]).tz_localize(None)
-        start_rfm = input.slider_rfm_score()[0]
-        end_rfm = input.slider_rfm_score()[1]
         if input.switch_valid():
             df = teachers[teachers['usuario_valido'] == True]
         else:
             df = teachers
         return df[
             (df['semana_entrada'] >= start_date) &
-            (df['semana_entrada'] <= end_date) &
-            (df['RFM_Score'] >= start_rfm) &
-            (df['RFM_Score'] <= end_rfm)
+            (df['semana_entrada'] <= end_date)
+        ]
+    
+    @reactive.calc
+    def entries_filtrado():
+        start_date = pd.to_datetime(input.slider_interacoes()[0]).tz_localize(None)
+        end_date = pd.to_datetime(input.slider_interacoes()[1]).tz_localize(None)
+        if input.switch_valid():
+            valid_users = teachers[teachers['usuario_valido'] == True]['unique_id'].unique()
+            df = entries[entries['unique_id'].isin(valid_users)]
+        else:
+            df = entries
+        return df[
+            (df['semana_inicio'] >= start_date) &
+            (df['semana_inicio'] <= end_date)
         ]
 
     @render.ui
     def header_exploracao():
         return ui.h2("Análise Exploratória")
+    
+    @render.ui
+    def divider():
+        return ui.hr()
+
+    @render.ui
+    def header_explicacao():
+        return ui.h2("Análise Explicativa")
 
     @render.text
     def qtd_professores():
@@ -307,6 +351,23 @@ def server(input, output, session):
             p9.theme(
                 panel_grid=p9.element_blank()
             )
+        )
+        return plot
+    
+    @render.plot
+    def plot_interacoes():
+        df = entries_filtrado()
+        interacoes = df.groupby(['semana_inicio']).size().reset_index(name='interacoes_count')
+        interacoes['semana_inicio'] = pd.to_datetime(interacoes['semana_inicio'])
+        plot = (
+            p9.ggplot(interacoes, p9.aes(x='semana_inicio', y='interacoes_count')) +
+            p9.geom_area(fill=color_map[1], alpha=0.5) +
+            p9.geom_line(color=color_map[1]) +
+            p9.labs(
+                x='Data de Início (Semana)',
+                y='Número de Interações'
+            ) +
+            p9.theme_minimal()
         )
         return plot
     
