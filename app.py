@@ -20,7 +20,7 @@ icon_interaction = '<img src="https://github.com/guifidalgo/Shiny-AprendiZAP/blo
 icon_speedometer = '<img src="https://github.com/guifidalgo/Shiny-AprendiZAP/blob/master/assets/speedometer_white.png?raw=true" alt="Velocímetro" width="50" height="50">'
 icon_stopwatch = '<img src="https://github.com/guifidalgo/Shiny-AprendiZAP/blob/master/assets/stopwatch_white.png?raw=true" alt="Cronômetro" width="50" height="50">'
 
-teachers = pd.read_parquet("data/teachers_entries.parquet")
+teachers = pd.read_parquet("data-transformed/teachers_entries.parquet")
 teachers = teachers[teachers['Frequency'] < 9000]
 teachers['semana_entrada'] = pd.to_datetime(teachers['semana_entrada']).dt.tz_localize(None)
 teachers['usuario_valido'] = teachers['selectedstages'].notna()
@@ -33,7 +33,7 @@ m_score.sort()
 rfm_score = teachers['RFM_Score'].unique().tolist()
 rfm_score.sort()
 
-entries = pd.read_parquet("data/entries.parquet")
+entries = pd.read_parquet("data-transformed/entries.parquet")
 entries = entries[entries['data_inicio'] >= "2022-01-03"]
 entries['semana_inicio'] = pd.to_datetime(entries['data_inicio'].dt.date - pd.to_timedelta(entries['data_inicio'].dt.dayofweek, unit='d')).dt.tz_localize(None)
 

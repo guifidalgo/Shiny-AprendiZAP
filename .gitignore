@@ -9,9 +9,12 @@ wheels/
 # Virtual environments
 .venv
 
-
 notebooks/data/
-data/
+data/*
+data-raw/*
+!data-raw/.gitkeep
+data-transformed/
+!data-transformed/.gitkeep
 _old/
 
 .DS_Store
