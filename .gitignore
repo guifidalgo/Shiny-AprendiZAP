@@ -16,5 +16,6 @@ data-raw/*
 data-transformed/
 !data-transformed/.gitkeep
 _old/
+img/
 
 .DS_Store
