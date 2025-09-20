@@ -13,7 +13,7 @@ notebooks/data/
 data/*
 data-raw/*
 !data-raw/.gitkeep
-data-transformed/
+data-transformed/*
 !data-transformed/.gitkeep
 _old/
 img/
